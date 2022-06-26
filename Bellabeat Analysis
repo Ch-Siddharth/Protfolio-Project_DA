@@ -1,0 +1,159 @@
+---
+title: "Bellabeat Analysis Using R - A Case Study"
+output: html_notebook
+---
+
+# About Compony
+
+A High-tech Company that manufactures health focused smart Products for women. It is small size company but they are capable enough to expand it and having potential becoame a larger player in this segment of smart technology. Urška Sršen and Sando Mur founded Bellabeat, believe that analyzing the data can open growth opportunity in market for them.
+
+### Questions to find-
+
+1. What are some trends in smart device usage?
+2. How could these trends apply to Bellabeat customers?
+3. How could these trends help influence Bellabeat marketing strategy?
+
+### Business Task-
+
+* To Identify potential opportunities for growth and recommendations for the Bellabeat marketing strategy improvement based on trends in smart device usage.
+
+### Key Stackholders-
+
+* The main stakeholders here are Urška Sršen, Bellabeat’s co-founder and Chief Creative Officer; Sando Mur, Mathematician and Bellabeat’s cofounder; And the rest of the Bellabeat marketing analytics team.
+
+
+##### Installing Packages
+```{r}
+#Install Pakages
+
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+### Importing Data
+
+Data is downloaded first then being imported from own Directory 
+
+```{r}
+daily_activity <- read_csv("Protfolio Projects/Bellabeat Analysis/Raw Data/dailyActivity_merged.csv")
+daily_calories <- read_csv("Protfolio Projects/Bellabeat Analysis/Raw Data/dailyCalories_merged.csv")
+daily_intensities <- read_csv("Protfolio Projects/Bellabeat Analysis/Raw Data/dailyIntensities_merged.csv")
+sleep <- read_csv("Protfolio Projects/Bellabeat Analysis/Raw Data/sleepDay_merged.csv")
+weight <- read_csv("Protfolio Projects/Bellabeat Analysis/Raw Data/weightLogInfo_merged.csv")
+```
+
+* Let's Check the data using Head() function
+
+```{r}
+head(daily_activity)
+```
+
+
+#### fixing the formating for Date and Time datatype
+
+```{r}
+#daily_activity
+daily_activity$ActivityDate=as.POSIXct(daily_activity$ActivityDate, format="%m/%d/%Y", tz=Sys.timezone())
+daily_activity$date <- format(daily_activity$ActivityDate, format = "%m/%d/%y")
+#daily_calories
+daily_calories$ActivityDay=as.POSIXct(daily_calories$ActivityDay, format="%m/%d/%Y", tz=Sys.timezone())
+daily_calories$Day <- format(daily_calories$ActivityDay, format = "%m/%d/%y")
+#daily_intensities
+daily_intensities$ActivityDay=as.POSIXct(daily_intensities$ActivityDay, format="%m/%d/%Y", tz=Sys.timezone())
+daily_intensities$Day <- format(daily_intensities$ActivityDay, format = "%m/%d/%y")
+#sleep
+sleep$SleepDay=as.POSIXct(sleep$SleepDay, format="%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+sleep$date <- format(sleep$SleepDay, format = "%m/%d/%y")
+```
+
+
+
+#### Now, Formating is done for data, let's Summarize the data
+
+```{r}
+n_distinct(daily_activity$Id)
+n_distinct(daily_calories$Id)
+n_distinct(daily_intensities$Id)
+n_distinct(sleep$Id)
+n_distinct(weight$Id)
+```
+Showing No. of Participants in each categories of data.
+
+Let's keep continue and try to find more useful information from data (Data Summary)
+
+```{r}
+#daily_activity
+daily_activity %>% 
+  select(TotalSteps, TotalDistance, SedentaryMinutes, Calories) %>% 
+  summary()
+#Active Minutes in daily_activity dataset
+daily_activity %>% 
+  select(VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes) %>% 
+  summary()
+#daily_calorie
+daily_calories %>% 
+  select(Calories) %>% 
+  summary()
+#weight
+weight %>%
+  select(WeightKg, BMI) %>%
+  summary()
+#sleep
+sleep %>%
+  select(TotalSleepRecords, TotalMinutesAsleep, TotalTimeInBed) %>%
+  summary()
+```
+
+### Key Findings from this summary-
+
+* Major of the participants are lightly active
+* AVg. Sedentary time is 991 min. which needs to be reduced
+* Average total steps per day are 7638 which a little bit less for having health benefits. According to the CDC research, to lower risk for all-cause mortality (or death from all causes) by 51%, 8,000 steps per day should be taken and Taking 12,000 steps per day was associated with a 65% lower risk compared with taking 4,000 steps.
+
+## Merging Data For Analysis
+
+Inner joining of datasets daily_activity and Sleep on Id & Date.
+
+```{r}
+merged_data <- merge(sleep, daily_activity, by=c('Id', 'date'))
+head(merged_data)
+```
+
+# Data Visualization
+
+```{r}
+#Showing trend between total Sleep and Total time in bed
+
+ggplot(data = sleep) + geom_point(mapping = aes(x=TotalMinutesAsleep, y=TotalTimeInBed, color=Id)) + labs(title = "Total Sleep in min vs Total time in Bed")
+```
+* This trend shows linear relationship.
+
+```{r}
+#Total Steps vs Calory
+ggplot(data = daily_activity, aes(x=TotalSteps, y=Calories, color=Id)) + geom_point() + geom_smooth(method = "loess") + labs(title = "Total Steps Vs Calory")
+```
+* Positive Correlation Found i.e. More Steps we walk, more calories will burn.
+
+```{r}
+ggplot(data=merged_data, aes(x=TotalMinutesAsleep, y=SedentaryMinutes)) + 
+geom_point(color='darkgreen') + geom_smooth() +
+  labs(title="Minutes A sleep vs. Sedentary Minutes")
+```
+* Negative Correlation found between Total minute a Sleep and Sedentary Minutes.
+* To improve sleep, Sedentary Minutes must be reduced.
+
+
+# Insights/Findings
+  
+* Average total steps per day are 7638 which a little bit less for having health benefits.Compony can encourage users to reach    atleast 8000 steps a day to stay fit through marketing campeign.
+
+* If users want to improve their sleep, Bellabeat should consider using app notifications to go to bed.
+* To improve sleep, Sedentary Minutes must be reduced.
+* If users want to lose Fat, it’s probably a good idea to control daily calorie consumption to become healthy. Bellabeat can      suggest some ideas for low-calorie lunch and dinner.
+
+
+### Thanks for exploring my Bellabeat Case Study.
+
